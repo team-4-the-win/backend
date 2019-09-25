@@ -20,7 +20,7 @@ const router = express.Router()
 
 // INDEX
 // GET /fileUploads
-router.get('/fileUploads', requireToken, (req, res, next) => {
+router.get('/fileUploads', (req, res, next) => {
   FileUpload.find()
     .then(fileUploads => {
       return fileUploads.map(fileUpload => fileUpload.toObject())
@@ -31,7 +31,7 @@ router.get('/fileUploads', requireToken, (req, res, next) => {
 
 // SHOW
 // GET /fileUploads/5a7db6c74d55bc51bdf39793
-router.get('/fileUploads/:id', requireToken, (req, res, next) => {
+router.get('/fileUploads/:id', (req, res, next) => {
   FileUpload.findById(req.params.id)
     .then(handle404)
     .then(fileUpload => res.status(200).json({ fileUpload: fileUpload.toObject() }))
@@ -40,13 +40,15 @@ router.get('/fileUploads/:id', requireToken, (req, res, next) => {
 
 // CREATE
 // POST /fileUploads
-router.post('/fileUploads', upload.single('upload'), (req, res, next) => {
+router.post('/fileUploads', requireToken, upload.single('upload'), (req, res, next) => {
+  req.file.owner = req.user.id
   fileUploadApi(req.file)
     .then(s3Response => {
       const fileUploadParams = {
         name: s3Response.Key,
         fileType: req.file.mimetype,
-        url: s3Response.Location
+        url: s3Response.Location,
+        user: req.user
       }
       return FileUpload.create(fileUploadParams)
     })
@@ -58,14 +60,14 @@ router.post('/fileUploads', upload.single('upload'), (req, res, next) => {
 // UPDATE
 // PATCH /fileUploads/5a7db6c74d55bc51bdf39793
 router.patch('/fileUploads/:id', requireToken, removeBlanks, (req, res, next) => {
-  delete req.body.fileUpload.owner
+  delete req.file.owner
 
   FileUpload.findById(req.params.id)
     .then(handle404)
     .then(fileUpload => {
       requireOwnership(req, fileUpload)
 
-      return fileUpload.updateOne(req.body.fileUpload)
+      return fileUpload.updateOne(req.file.fileUpload)
     })
     .then(() => res.sendStatus(204))
     .catch(next)
