@@ -21,7 +21,8 @@ const fileUploadSchema = mongoose.Schema({
   },
   tag: {
     type: String
-  },
+  }
+}, {
   timestamps: true
 })
 
