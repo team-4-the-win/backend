@@ -60,14 +60,14 @@ router.post('/fileUploads', requireToken, upload.single('upload'), (req, res, ne
 // UPDATE
 // PATCH /fileUploads/5a7db6c74d55bc51bdf39793
 router.patch('/fileUploads/:id', requireToken, removeBlanks, (req, res, next) => {
-  delete req.file.owner
+  delete req.body.user
 
   FileUpload.findById(req.params.id)
     .then(handle404)
     .then(fileUpload => {
       requireOwnership(req, fileUpload)
 
-      return fileUpload.updateOne(req.file.fileUpload)
+      return fileUpload.updateOne(req.body.fileUpload)
     })
     .then(() => res.sendStatus(204))
     .catch(next)
