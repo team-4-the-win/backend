@@ -79,6 +79,7 @@ router.delete('/fileUploads/:id', requireToken, (req, res, next) => {
   FileUpload.findById(req.params.id)
     .then(handle404)
     .then(fileUpload => {
+      console.log(fileUpload)
       requireOwnership(req, fileUpload)
       fileUpload.deleteOne()
     })
